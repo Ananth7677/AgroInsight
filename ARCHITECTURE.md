@@ -1,4 +1,3 @@
-````markdown
 # Detailed Architecture & Design Decisions
 
 ## 1) System overview
@@ -375,5 +374,3 @@ UI behavior notes:
 - Left panel scroll is constrained to session list only.
 - Session cards use meaningful labels derived from history (not raw IDs).
 - Assistant output renders markdown-style bold (`**text**`) for readability.
-
-````
