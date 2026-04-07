@@ -235,7 +235,7 @@ graph TD
     style End fill:#90EE90
 ```
 
-## 4) LangGraph node design
+## 8) LangGraph node design
 
 ### `plan`
 - File: [DeepResearchAgent/app/graph.py](DeepResearchAgent/app/graph.py)
@@ -260,7 +260,7 @@ graph TD
 ### `memory`
 - Saves episodic memory events (`query` + `result`) for semantic retrieval later.
 
-## 5) Memory architecture
+## 9) Memory architecture
 
 ### A) Semantic episodic memory (`memory_events`)
 - Embedding: deterministic hash embedding for portable demo behavior.
@@ -272,7 +272,7 @@ graph TD
 - Keeps prior location/crop focus/top candidates and complete turn transcript.
 - Enables follow-up questions without re-supplying context.
 
-## 6) Constraints strategy
+## 10) Constraints strategy
 
 Configured in [DeepResearchAgent/app/config.py](DeepResearchAgent/app/config.py) and `.env`:
 - `MAX_CONTEXT_TOKENS` (default 2000)
@@ -284,13 +284,13 @@ Enforcement:
 - Prompt/cost estimates are reported in response.
 - `constraints_ok` indicates whether constraints were satisfied.
 
-## 7) Caching strategy
+## 11) Caching strategy
 
 - In-memory TTL cache implemented in [DeepResearchAgent/app/core/cache.py](DeepResearchAgent/app/core/cache.py).
 - Integrated at controller level in [DeepResearchAgent/app/controllers/research_controller.py](DeepResearchAgent/app/controllers/research_controller.py).
 - Cache key includes session/query/location/crop/IP dimensions for safe reuse.
 
-## 8) API surface
+## 12) API surface
 
 Primary endpoints:
 - `POST /research`
@@ -298,7 +298,7 @@ Primary endpoints:
 - `GET /sessions/{session_id}/history`
 - `GET /health`
 
-## 9) Data model summary
+## 13) Data model summary
 
 Reference data:
 - [DeepResearchAgent/data/soil_defaults.json](DeepResearchAgent/data/soil_defaults.json)
@@ -311,7 +311,7 @@ DB tables:
 - `chat_sessions`
 - `chat_turns`
 
-## 10) Key design decisions
+## 14) Key design decisions
 
 1. LangGraph over visual orchestrators
 - Reason: deterministic, testable node-level behavior and explicit state transitions.
@@ -328,21 +328,21 @@ DB tables:
 5. Graceful LLM fallback
 - Reason: avoid hard failures when model identifiers or API behavior changes.
 
-## 11) Known limitations
+## 15) Known limitations
 
 - Prototype agronomy logic is intentionally simplified.
 - Price dataset is seed/mock and limited in geographic granularity.
 - Cost estimation is heuristic, not exact provider billing.
 - In-memory cache is single-process (not distributed).
 
-## 12) Suggested future improvements
+## 16) Suggested future improvements
 
 - Redis cache backend for multi-instance deployments.
 - Rich agronomic data sources (district-level weather/soil APIs).
 - Profitability model including input-cost datasets.
 - Automated eval suite for response quality and constraint adherence.
 
-## 13) Frontend architecture (Angular)
+## 17) Frontend architecture (Angular)
 
 Frontend lives in sibling project folder `DeepResearchAgentUI`.
 
