@@ -9,7 +9,7 @@ import { SessionHistoryResponse, SessionsResponse } from '../interfaces/session.
 @Injectable({ providedIn: 'root' })
 export class ResearchApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://127.0.0.1:8001';
+  private readonly baseUrl = 'http://127.0.0.1:8000';
 
   research(payload: ResearchRequest): Observable<ResearchResponse> {
     return this.http.post<ResearchResponse>(`${this.baseUrl}/research`, payload);
