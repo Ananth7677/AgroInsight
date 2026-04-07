@@ -1,0 +1,31 @@
+region,crop,month,avg_price
+india,rice,2025-11-01,31
+india,rice,2025-12-01,32
+india,rice,2026-01-01,34
+india,rice,2026-02-01,35
+india,rice,2026-03-01,36
+india,rice,2026-04-01,37
+india,maize,2025-11-01,23
+india,maize,2025-12-01,24
+india,maize,2026-01-01,25
+india,maize,2026-02-01,24
+india,maize,2026-03-01,26
+india,maize,2026-04-01,27
+india,soybean,2025-11-01,41
+india,soybean,2025-12-01,39
+india,soybean,2026-01-01,40
+india,soybean,2026-02-01,42
+india,soybean,2026-03-01,44
+india,soybean,2026-04-01,45
+united states,wheat,2025-11-01,29
+united states,wheat,2025-12-01,28
+united states,wheat,2026-01-01,30
+united states,wheat,2026-02-01,31
+united states,wheat,2026-03-01,32
+united states,wheat,2026-04-01,33
+united states,corn,2025-11-01,21
+united states,corn,2025-12-01,22
+united states,corn,2026-01-01,23
+united states,corn,2026-02-01,24
+united states,corn,2026-03-01,24
+united states,corn,2026-04-01,25

@@ -1,0 +1,112 @@
+<div class="shell">
+  <aside class="sidebar">
+    <div>
+      <div class="sidebar-label">Assistant</div>
+      <div class="mode-single">Research Chat</div>
+    </div>
+
+    <div>
+      <div class="sidebar-label">Settings</div>
+      <div class="toggle-row">
+        <span class="toggle-label">Show metadata</span>
+        <label class="toggle">
+          <input type="checkbox" [ngModel]="showMeta()" (ngModelChange)="setShowMeta($event)" name="showMeta" />
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+    </div>
+
+    <div>
+      <div class="sidebar-label">API Status</div>
+      <div class="status-row">
+        <div class="dot" [class.ok]="apiConnected()" [class.err]="!apiConnected()"></div>
+        <span>{{ apiConnected() ? 'Connected' : 'API offline' }}</span>
+      </div>
+    </div>
+
+    <div class="session-wrap">
+      <div class="sidebar-label">Sessions</div>
+      <button class="ghost-btn" (click)="loadSessions()" [disabled]="loadingSessions()">
+        {{ loadingSessions() ? 'Refreshing...' : 'Refresh Sessions' }}
+      </button>
+      <button class="ghost-btn" (click)="clearSession()" [disabled]="!currentSessionId()">New Session</button>
+      <div class="sources-list">
+        <button class="source-pill" *ngFor="let s of sessions()" (click)="useSession(s.id)">
+          <strong>{{ s.label }}</strong>
+          <span>{{ s.turn_count }} turns</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">Deep Research Agent</div>
+      <div class="topbar-meta">Context-aware agriculture recommendations</div>
+    </div>
+
+    <div class="chat">
+      <div class="empty" *ngIf="chatMessages().length === 0">
+        <div class="emoji">🌾</div>
+        <h2>Ask agriculture research questions</h2>
+        <p>Session-aware recommendations grounded in season, soil, location, and market context.</p>
+        <div class="suggestions">
+          <button class="suggestion-chip" *ngFor="let s of suggestions()" (click)="useSuggestion(s)">{{ s }}</button>
+        </div>
+      </div>
+
+      <ng-container *ngFor="let m of chatMessages()">
+        <div class="msg" *ngIf="m.role === 'user'">
+          <div class="msg-user">{{ m.text }}</div>
+        </div>
+
+        <div class="msg" *ngIf="m.role === 'assistant'">
+          <div class="msg-rag">
+            <div class="rag-header">
+              <span class="rag-badge">assistant</span>
+              <span class="conf-score" *ngIf="m.response">tokens: {{ m.response.prompt_tokens_estimate }}</span>
+            </div>
+            <div class="rag-body" [innerHTML]="renderRecommendation(m.text)"></div>
+            <details *ngIf="showMeta() && m.response">
+              <summary>Structured output + metrics</summary>
+              <pre>{{ m.response | json }}</pre>
+            </details>
+          </div>
+        </div>
+
+        <div class="msg" *ngIf="m.role === 'error'">
+          <div class="msg-error">{{ m.text }}</div>
+        </div>
+      </ng-container>
+
+      <div class="thinking" *ngIf="loading()">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <span>Thinking...</span>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="context-row">
+        <input [ngModel]="location()" (ngModelChange)="setLocation($event)" name="location" placeholder="Optional location" />
+        <input [ngModel]="soilType()" (ngModelChange)="setSoilType($event)" name="soilType" placeholder="Optional soil type" />
+      </div>
+
+      <div class="input-box">
+        <textarea
+          [ngModel]="query()"
+          (ngModelChange)="setQuery($event)"
+          name="query"
+          placeholder="Ask a question..."
+          rows="1"
+          (keydown)="onInputKeydown($event)"
+        ></textarea>
+        <button class="send-btn" (click)="submitResearch()" [disabled]="loading() || !query().trim()">
+          <svg width="16" height="16" viewBox="0 0 16 16"><path d="M1 8L15 1 8 15 7 9z" /></svg>
+        </button>
+      </div>
+      <div class="input-hint">Enter to send · Shift+Enter for new line</div>
+      <p class="error" *ngIf="error()">{{ error() }}</p>
+    </div>
+  </div>
+</div>

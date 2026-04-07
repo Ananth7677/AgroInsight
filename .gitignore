@@ -1,0 +1,19 @@
+# Python env/secrets (DeepResearchAgent)
+DeepResearchAgent/.env
+DeepResearchAgent/.env.*
+!DeepResearchAgent/.env.example
+DeepResearchAgent/.venv/
+DeepResearchAgent/venv/
+DeepResearchAgent/__pycache__/
+DeepResearchAgent/.pytest_cache/
+
+# Angular artifacts (DeepResearchAgentUI)
+DeepResearchAgentUI/node_modules/
+DeepResearchAgentUI/dist/
+DeepResearchAgentUI/.angular/
+
+# Shared IDE/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
