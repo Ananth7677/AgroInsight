@@ -53,37 +53,44 @@ This is a **Deep Research Agent** that answers complex agricultural questions wh
 
 ## Documentation & evaluation
 
-- **Architecture deep-dive**: [DeepResearchAgent/docs/ARCHITECTURE.md](DeepResearchAgent/docs/ARCHITECTURE.md)
-- **Evaluation & trade-offs**: [DeepResearchAgent/evaluation.md](DeepResearchAgent/evaluation.md) ← **Read this for constraint strategy and business reasoning**
+- **Architecture deep-dive**: [ARCHITECTURE.md](ARCHITECTURE.md) ← **Full system design**
+- **Evaluation & trade-offs**: [EVALUATION.md](EVALUATION.md) ← **Constraint strategy and business reasoning**
 - **Backend README**: [DeepResearchAgent/README.md](DeepResearchAgent/README.md)
 - **Frontend README**: [DeepResearchAgentUI/README.md](DeepResearchAgentUI/README.md)
 
-## End-to-end start guide
+## Quick start (One command)
 
-### 1) Start backend
+**From project root:**
 
-From `DeepResearchAgent`:
+```bash
+cd /Users/ananthnityandal/Desktop/AgroInsight
+docker compose up --build
+```
 
-- Copy config template:
-  - `cp .env.example .env`
-- Add your real key in `.env`:
-  - `GEMINI_API_KEY=...`
-- Start backend (choose one):
-  - Docker: `docker compose up --build`
-  - Local: `uvicorn main:app --reload --port 8001`
+This automatically:
+- ✅ Starts PostgreSQL 16 + pgvector database (port 5433)
+- ✅ Builds & runs FastAPI backend on port 8000
+- ✅ Builds & runs Angular frontend on port 4200
 
-Backend health URL:
-- `http://127.0.0.1:8001/health`
+**Once running, open in browser:**
+- **Frontend**: `http://localhost:4200`
+- **API Docs**: `http://localhost:8000/docs`
+- **Database**: `postgresql://postgres:postgres@localhost:5433/deepresearch`
 
-### 2) Start frontend
+**What you'll see:**
+```
+✔ Container deepresearch-db   Created
+✔ Container deepresearch-api  Created
+✔ Container deepresearch-ui   Created
 
-From `DeepResearchAgentUI`:
+deepresearch-db  | database system is ready to accept connections
+deepresearch-api | INFO: Uvicorn running on http://0.0.0.0:8000
+deepresearch-ui  | http-server version: 14.1.1
+deepresearch-ui  | Available on: http://127.0.0.1:4200
+deepresearch-ui  | Node.js v20.20.2 / http-server server running
+```
 
-- `npm install`
-- `npm start`
-
-Frontend URL:
-- `http://localhost:4200`
+The Angular frontend serves via Node.js http-server directly from the browser bundles.
 
 ## Integration contract
 
@@ -94,11 +101,13 @@ Frontend calls backend endpoints:
 - `GET /sessions`
 - `GET /sessions/{session_id}/history`
 
-Backend base URL expected by UI:
-- `http://127.0.0.1:8001`
+Backend running at:
+- `http://deepresearch-api:8000` (Docker internal)
+- `http://127.0.0.1:8000` (host access)
 
 ## Secrets policy
 
 - Keep real secrets only in local `.env` files.
 - Commit only `.env.example` placeholders.
 - Do not commit API keys to git.
+- Ensure `DeepResearchAgent/.env` contains `GEMINI_API_KEY` before running `docker compose up`

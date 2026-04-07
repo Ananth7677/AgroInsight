@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: deepresearch-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: deepresearch
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d deepresearch"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: ./DeepResearchAgent
+      dockerfile: Dockerfile
+    container_name: deepresearch-api
+    env_file:
+      - ./DeepResearchAgent/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: deepresearch
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  ui:
+    build:
+      context: ./DeepResearchAgentUI
+      dockerfile: Dockerfile
+    container_name: deepresearch-ui
+    ports:
+      - "4200:4200"
+    environment:
+      - API_URL=http://api:8000
+    depends_on:
+      - api
+
+volumes:
+  pgdata:

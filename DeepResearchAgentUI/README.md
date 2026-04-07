@@ -7,12 +7,35 @@ This is the Angular UI for the Deep Research Agent backend.
 - Angular 21 (standalone + routing + SSR scaffold)
 - Signals-based state in the research page
 - HTTP integration with FastAPI backend
+- Served via Node.js http-server (v20.20.2)
 
 ## Prerequisites
 
 - Node.js 20+
 - npm
-- Backend running at `http://127.0.0.1:8001`
+- Backend running at `http://127.0.0.1:8000`
+
+## Quick start (Docker - Recommended)
+
+From project root:
+
+```bash
+docker compose up --build
+```
+
+Frontend automatically starts on `http://localhost:4200`
+
+**Running services output:**
+```
+✔ Container deepresearch-ui   Created
+deepresearch-ui  | Starting up http-server, serving dist
+deepresearch-ui  | http-server version: 14.1.1
+deepresearch-ui  | Available on:
+deepresearch-ui  |   http://127.0.0.1:4200
+deepresearch-ui  |   http://172.20.0.4:4200
+```
+
+The http-server directly serves Angular browser bundles from `dist/browser/`, so routes like `/research` work correctly without path prefixes.
 
 ## Run locally
 
