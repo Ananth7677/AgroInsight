@@ -28,52 +28,211 @@ Primary stack:
 - Database init + seed logic: [DeepResearchAgent/app/db.py](DeepResearchAgent/app/db.py)
 - Config and constraints: [DeepResearchAgent/app/config.py](DeepResearchAgent/app/config.py)
 
-## 3) Request flow (end-to-end)
+## 3) System Architecture Diagram
 
-1. Client sends `POST /research` with `query` and optional `session_id`.
-2. Controller resolves/create session (`chat_sessions`) and reads recent conversation context (`chat_turns`).
-3. Controller normalizes query and resolves:
-   - location from query aliases / provided location / prior turn metadata / IP fallback,
-   - crop focus for deictic follow-ups (e.g., "this crop"),
-   - compare mode for `compare` / `vs` profitability queries.
-4. Controller checks in-memory TTL cache key.
-5. On miss, LangGraph executes:
-   - `plan` node: query decomposition,
-   - `context` node: location-season-soil-market + memory retrieval,
-   - `synthesize` node: generate recommendation under mode (ranking/comparison/precaution),
-   - `memory` node: save episodic events in `memory_events`.
-6. Controller writes user + assistant turns into `chat_turns`.
-7. Response is cached and returned.
+```mermaid
+graph TB
+    subgraph Frontend["🖥️ Frontend"]
+        UI["Angular 21 UI<br/>(Research Console)"]
+    end
+    
+    subgraph API["🔌 API Layer"]
+        Controller["FastAPI Controller<br/>(POST /research)"]
+        Cache["TTL Cache<br/>(In-Memory)"]
+    end
+    
+    subgraph Orchestration["🔄 Orchestration"]
+        LG["LangGraph Workflow"]
+        Plan["Plan Node<br/>(Query Decompose)"]
+        Context["Context Node<br/>(Geo/Season/Soil/Market/Memory)"]
+        Synthesize["Synthesize Node<br/>(Ranking/Comparison/Precaution Modes)"]
+        Memory["Memory Node<br/>(Save Episodic Events)"]
+    end
+    
+    subgraph LLM["🤖 LLM"]
+        Gemini["Gemini 2.0 Flash<br/>(with Fallback)"]
+    end
+    
+    subgraph Persistence["💾 Data Layer"]
+        DB["PostgreSQL + pgvector"]
+        Sessions["chat_sessions<br/>chat_turns"]
+        Episodic["memory_events<br/>(vector embeddings)"]
+        Reference["market_prices<br/>soil_defaults"]
+    end
+    
+    UI -->|POST /research| Controller
+    Controller -->|lookup| Cache
+    Controller -->|miss| LG
+    Cache -->|hit| Controller
+    
+    LG --> Plan
+    Plan --> Context
+    Context --> Synthesize
+    Synthesize --> LLM
+    Gemini --> Synthesize
+    Synthesize --> Memory
+    Memory --> DB
+    
+    Context -->|vector retrieval| DB
+    Plan -->|market/soil data| DB
+    Controller -->|save turns| DB
+    
+    DB --> Sessions
+    DB --> Episodic
+    DB --> Reference
+    
+    LG -->|result| Controller
+    Controller -->|cache| Cache
+    Controller -->|200 response| UI
+```
 
-### Sequence diagram
+## 4) Request Flow (Step-by-Step)
+
+1. **Client Request** → `POST /research` with query + optional session_id
+2. **Session Resolution** → Controller ensures session exists in `chat_sessions`
+3. **Query Parsing** → Extract location, crop focus, compare intent from query text
+4. **Cache Lookup** → Check in-memory TTL cache with multi-dimensional key
+   - **Cache HIT** → Return cached response immediately
+   - **Cache MISS** → Proceed to workflow
+5. **LangGraph Execution**:
+   - **Plan Node** → Decompose query into actionable parts
+   - **Context Node** → Gather location/season/soil/market data + retrieve semantic memory
+   - **Synthesize Node** → Call Gemini LLM with appropriate mode (ranking/comparison/precaution)
+   - **Memory Node** → Save new episodic events with vector embeddings
+6. **Persist Conversation** → Save user + assistant turns in `chat_turns` table
+7. **Cache Store** → Store response in TTL cache
+8. **Return Response** → 200 response with recommendation + metadata
+
+## 5) Request Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-   participant U as User/Client
-   participant API as FastAPI Controller
-   participant C as TTL Cache
-   participant DB as PostgreSQL + pgvector
-   participant G as LangGraph
-   participant L as Gemini LLM
+    autonumber
+    participant User
+    participant Controller as Controller<br/>(FastAPI)
+    participant Cache as Cache<br/>(TTL)
+    participant Graph as LangGraph<br/>Workflow
+    participant Gemini
+    participant Database as PostgreSQL<br/>+ pgvector
 
-   U->>API: POST /research (query, optional session_id)
-   API->>DB: ensure session + fetch recent turns
-   API->>API: parse query (location/crop/compare intent)
-   API->>C: lookup cache key
-   alt Cache hit
-      C-->>API: cached response
-      API-->>U: 200 response
-   else Cache miss
-      API->>G: invoke workflow state
-      G->>DB: retrieve vector memory + market/soil context
-      G->>L: synthesize recommendation
-      L-->>G: generated answer
-      G->>DB: save episodic memory events
-      G-->>API: structured result
-      API->>DB: save user/assistant chat turns
-      API->>C: store response (TTL)
-      API-->>U: 200 response
-   end
+    User->>Controller: POST /research<br/>{query, session_id?}
+    
+    Controller->>Database: Ensure session exists<br/>Fetch recent turns
+    Database-->>Controller: Session + history
+    
+    Controller->>Controller: Parse query<br/>(location, crop, intent)
+    
+    Controller->>Cache: Lookup cache key
+    alt Cache Hit ✓
+        Cache-->>Controller: Return cached response
+        Controller-->>User: 200 {recommendation}
+    else Cache Miss ✗
+        Controller->>Graph: Invoke workflow
+        
+        Graph->>Graph: Plan Node<br/>Decompose query
+        
+        Graph->>Database: Context Node<br/>Get geo/season/soil/market
+        Database-->>Graph: Data retrieved
+        
+        Graph->>Database: Retrieve vector memory<br/>Semantic search
+        Database-->>Graph: Similar past events
+        
+        Graph->>Gemini: Synthesize Node<br/>Call LLM with context
+        Gemini-->>Graph: Generated recommendation
+        
+        Graph->>Database: Memory Node<br/>Save episodic event
+        
+        Graph-->>Controller: Return structured result
+        
+        Controller->>Database: Save chat turns<br/>(user + assistant)
+        
+        Controller->>Cache: Store response<br/>with TTL
+        
+        Controller-->>User: 200 {recommendation}
+    end
+```
+
+## 6) Data Flow Diagram
+
+```mermaid
+graph LR
+    subgraph Input["📥 Input"]
+        Query["User Query"]
+        SessionID["Session ID<br/>(optional)"]
+    end
+    
+    subgraph Processing["⚙️ Processing"]
+        Parse["Query Parser<br/>(Extract intent)"]
+        Decompose["Planner<br/>(Decompose)"]
+        Gather["Context Gatherer<br/>(Geo/Season/Soil/Market)"]
+        Retrieve["Memory Retriever<br/>(Vector Search)"]
+        Synthesize["LLM Synthesizer<br/>(Gemini)"]
+    end
+    
+    subgraph DataSources["📊 Data Sources"]
+        Sessions["chat_sessions<br/>(session state)"]
+        Turns["chat_turns<br/>(conversation history)"]
+        Episodic["memory_events<br/>(vector embeddings)"]
+        Market["market_prices"]
+        Soil["soil_defaults"]
+    end
+    
+    subgraph Output["📤 Output"]
+        Recommendation["Crop Recommendation"]
+        Candidates["Top Candidates"]
+        Metadata["Constraints/Cost"]
+    end
+    
+    Query --> Parse
+    SessionID --> Parse
+    Parse --> Decompose
+    Parse --> Sessions
+    Parse --> Turns
+    
+    Decompose --> Gather
+    Gather --> Market
+    Gather --> Soil
+    
+    Gather --> Retrieve
+    Retrieve --> Episodic
+    
+    Gather --> Synthesize
+    Retrieve --> Synthesize
+    Turns --> Synthesize
+    
+    Synthesize --> Recommendation
+    Synthesize --> Candidates
+    Synthesize --> Metadata
+    
+    Recommendation --> Output
+    Candidates --> Output
+    Metadata --> Output
+```
+
+## 7) LangGraph Node Execution Flow
+
+```mermaid
+graph TD
+    Start["🟢 Request Arrives<br/>POST /research"]
+    
+    Start --> Plan["📋 Plan Node<br/>Decompose query intent"]
+    Plan --> Context["🌍 Context Node<br/>Gather location/season/soil/market"]
+    Context --> Memory["🧠 Retrieve Episodic Memory<br/>Vector semantic search"]
+    Memory --> Syn["💡 Synthesize Node<br/>Build prompt + call Gemini"]
+    Syn --> Save["💾 Memory Node<br/>Save new events with embeddings"]
+    Save --> Response["✅ Return Result<br/>Recommendation + metadata"]
+    Response --> Cache["🔄 Cache Store<br/>TTL expires"]
+    Cache --> End["🟢 Send to Client"]
+    
+    style Start fill:#90EE90
+    style Plan fill:#87CEEB
+    style Context fill:#87CEEB
+    style Memory fill:#87CEEB
+    style Syn fill:#FFB6C1
+    style Save fill:#DDA0DD
+    style Response fill:#F0E68C
+    style Cache fill:#F0E68C
+    style End fill:#90EE90
 ```
 
 ## 4) LangGraph node design
