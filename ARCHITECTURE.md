@@ -223,15 +223,15 @@ graph TD
     Response --> Cache["🔄 Cache Store<br/>TTL expires"]
     Cache --> End["🟢 Send to Client"]
     
-    style Start fill:#90EE90
-    style Plan fill:#87CEEB
-    style Context fill:#87CEEB
-    style Memory fill:#87CEEB
-    style Syn fill:#FFB6C1
-    style Save fill:#DDA0DD
-    style Response fill:#F0E68C
-    style Cache fill:#F0E68C
-    style End fill:#90EE90
+    style Start fill:#4CAF50,color:#fff,stroke:#2E7D32,stroke-width:2px
+    style Plan fill:#2196F3,color:#fff,stroke:#1565C0,stroke-width:2px
+    style Context fill:#2196F3,color:#fff,stroke:#1565C0,stroke-width:2px
+    style Memory fill:#2196F3,color:#fff,stroke:#1565C0,stroke-width:2px
+    style Syn fill:#FF9800,color:#fff,stroke:#E65100,stroke-width:2px
+    style Save fill:#9C27B0,color:#fff,stroke:#6A1B9A,stroke-width:2px
+    style Response fill:#FBC02D,color:#000,stroke:#F57F17,stroke-width:2px
+    style Cache fill:#FBC02D,color:#000,stroke:#F57F17,stroke-width:2px
+    style End fill:#4CAF50,color:#fff,stroke:#2E7D32,stroke-width:2px
 ```
 
 ## 8) LangGraph node design
